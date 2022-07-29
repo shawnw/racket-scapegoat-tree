@@ -1,13 +1,13 @@
 #lang scribble/manual
 @(require
- (for-label data/scapegoat-tree
+ (for-label scapegoat-tree
             racket/base
             racket/contract
             data/order))
 
 @title{Scapegoat Trees}
 
-@defmodule[data/scapegoat-tree]
+@defmodule[scapegoat-tree]
 
 @section{Introduction}
 

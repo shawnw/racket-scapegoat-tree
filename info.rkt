@@ -1,5 +1,5 @@
 #lang info
-(define collection 'multi)
+(define collection "scapegoat-tree")
 (define deps '("data-lib" "base"))
 (define build-deps '("data-doc" "scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/main.scrbl" (multi-page) ("Scapegoat Trees"))))

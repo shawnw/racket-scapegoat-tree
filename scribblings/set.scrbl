@@ -1,13 +1,13 @@
 #lang scribble/manual
 @(require
- (for-label data/scapegoat-tree/set
+ (for-label scapegoat-tree/set
             racket/base
             racket/contract
             data/order))
 
 @title{Scapegoat Tree Sets}
 
-@defmodule[data/scapegoat-tree/set]
+@defmodule[scapegoat-tree/set]
 
 A set type, implemented using the @racket[gen:set] interface on top of scapegoat tree dicts.
 
