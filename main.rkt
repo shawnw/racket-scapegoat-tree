@@ -87,9 +87,10 @@
    (define (dict-iterate-greatest/<? st key) (scapegoat-tree-great-iterator st key '(<)))
    (define (dict-iterate-greatest/<=? st key) (scapegoat-tree-great-iterator st key '(< =)))])
 
-(define (make-scapegoat-tree [order datum-order] #:key-contract [key-contract any/c] #:value-contract [value-contract any/c])
-  (scapegoat-tree 0 0 order (if (eq? (order-domain-contract order) key-contract)
-                                key-contract
+(define (make-scapegoat-tree [order datum-order] #:key-contract [key-contract (order-domain-contract order)] #:value-contract [value-contract any/c])
+  (scapegoat-tree 0 0 order (if (or (eq? (order-domain-contract order) key-contract)
+                                    (eq? key-contract any/c))
+                                (order-domain-contract order)
                                 (and/c (order-domain-contract order) key-contract))
                   value-contract #f))
 (define (scapegoat-tree-empty? st) (= (scapegoat-tree-count st) 0))
@@ -104,9 +105,20 @@
     ((procedure? default) (default))
     (else default)))
 
-(define (scapegoat-tree-ref st key [default (lambda () (error "key not found\n    key: " key))])
+(define-syntax-rule (check-key-contract function st key)
   (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-ref" "key fails contract" key))
+    (raise-argument-error (symbol->string function) "key fails contract" key)))
+
+(define-syntax-rule (check-order-contract function st key)
+  (unless ((order-domain-contract (scapegoat-tree-order st)) key)
+    (raise-argument-error (symbol->string function) "key fails ordering contract" key)))
+
+(define-syntax-rule (check-value-contract function st v)
+  (unless ((scapegoat-tree-value-contract st) v)
+    (raise-argument-error (symbol->string function) "value fails contract" v)))
+
+(define (scapegoat-tree-ref st key [default (lambda () (error "key not found\n    key: " key))])
+  (check-order-contract 'scapegoat-tree-ref st key)
   (node-ref (scapegoat-tree-order st) (scapegoat-tree-root st) key default))
 
 (define (size node)
@@ -174,18 +186,14 @@
       (values new-root inserted?))))
 
 (define (scapegoat-tree-set st key v)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-set" "key fails contract" key))
-  (unless ((scapegoat-tree-value-contract st) v)
-    (raise-argument-error "scapegoat-tree-set" "value fails contract" v))
+  (check-key-contract 'scapegoat-tree-set st key)
+  (check-value-contract 'scapegoat-tree-set st v)
   (let-values ([(new-root inserted?) (node-insert (scapegoat-tree-max-count st) (scapegoat-tree-order st) (scapegoat-tree-root st) key v)])
     (struct-copy scapegoat-tree st [root new-root] [count (+ (scapegoat-tree-count st) (if inserted? 1 0))] [max-count (+ (scapegoat-tree-max-count st) (if inserted? 1 0))])))
 
 (define (scapegoat-tree-set! st key v)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-set!" "key fails contract" key))
-  (unless ((scapegoat-tree-value-contract st) v)
-    (raise-argument-error "scapegoat-tree-set!" "value fails contract" v))
+  (check-key-contract 'scapegoat-tree-set! st key)
+  (check-value-contract 'scapegoat-tree-set! st v)
   (let-values ([(new-root inserted?) (node-insert (scapegoat-tree-max-count st) (scapegoat-tree-order st) (scapegoat-tree-root st) key v)])
     (set-scapegoat-tree-root! st new-root)
     (when inserted?
@@ -231,8 +239,7 @@
       (values root #f)))
 
 (define (scapegoat-tree-delete st key)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-delete" "key fails contract" key))
+  (check-order-contract 'scapegoat-tree-delete st key)
   (let-values ([(new-root removed?) (node-remove (scapegoat-tree-order st) (scapegoat-tree-root st) key)]
                [(new-n) (sub1 (scapegoat-tree-count st))])
     (cond
@@ -245,8 +252,7 @@
       (else st))))
 
 (define (scapegoat-tree-delete! st key)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-delete!" "key fails contract" key))
+  (check-order-contract 'scapegoat-tree-delete st key)
   (let-values ([(new-root removed?) (node-remove (scapegoat-tree-order st) (scapegoat-tree-root st) key)]
                [(new-n) (sub1 (scapegoat-tree-count st))])
     (cond
@@ -278,9 +284,13 @@
                               (loop (node-right nod)))))])
         (scapegoat-tree-iterator st (generator->stream g)))))
 
-(define (scapegoat-tree-iterate-next st st-i)
+(define-syntax-rule (check-iterator function st st-i)
   (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterate-next" "Use of scapegoat tree iterator with different tree" st-i))
+    (raise-argument-error (symbol->string function) "Use of scapegoat tree iterator with different tree" st-i)))
+
+
+(define (scapegoat-tree-iterate-next st st-i)
+  (check-iterator 'scapegoat-tree-iterate-next st st-i)
   (if (stream-empty? (scapegoat-tree-iterator-elems st-i))
       #f
       (let ([new-elems (stream-rest (scapegoat-tree-iterator-elems st-i))])
@@ -297,8 +307,7 @@
             (scapegoat-tree-iterator st (stream nod))))))
 
 (define (scapegoat-tree-least-iterator st key rel)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-least-iterator" "key fails contract" key))
+  (check-order-contract 'scapegoat-tree-least-iterator st key)
   (if (scapegoat-tree-empty? st)
       #f
       (let* ([cmp (scapegoat-tree-order st)]
@@ -315,8 +324,7 @@
             (scapegoat-tree-iterator st (stream-cons least (generator->stream g)))))))
 
 (define (scapegoat-tree-great-iterator st key rel)
-  (unless ((scapegoat-tree-key-contract st) key)
-    (raise-argument-error "scapegoat-tree-great-iterator" "key fails contract" key))
+  (check-order-contract 'scapegoat-tree-great-iterator st key)
   (if (scapegoat-tree-empty? st)
       #f
       (let* ([cmp (scapegoat-tree-order st)]
@@ -346,33 +354,27 @@
             (scapegoat-tree-iterator st (stream-cons great (generator->stream g)))))))
 
 (define (scapegoat-tree-iterate-key st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterate-key" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterate-key st st-i)
   (node-key (stream-first (scapegoat-tree-iterator-elems st-i))))
 
 (define (scapegoat-tree-iterate-value st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterate-value" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterate-value st st-i)
   (node-val (stream-first (scapegoat-tree-iterator-elems st-i))))
 
 (define (scapegoat-tree-iterator->stream st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterator->stream" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterator->stream st st-i)
   (stream-map (lambda (elem) (values (node-key elem) (node-val elem))) (scapegoat-tree-iterator-elems st-i)))
 
 (define (scapegoat-tree-iterator->list st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterator->list" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterator->list st st-i)
   (map (lambda (nod) (cons (node-key nod) (node-val nod))) (stream->list (scapegoat-tree-iterator-elems st-i))))
 
 (define (scapegoat-tree-iterator->key-list st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterator->key-list" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterator->key-list st st-i)
   (map node-key (stream->list (scapegoat-tree-iterator-elems st-i))))
 
 (define (scapegoat-tree-iterator->value-list st st-i)
-  (unless (eq? st (scapegoat-tree-iterator-st st-i))
-    (raise-argument-error "scapegoat-tree-iterator->value-list" "Use of scapegoat tree iterator with different tree" st-i))
+  (check-iterator 'scapegoat-tree-iterator->value-list st st-i)
   (map node-val (stream->list (scapegoat-tree-iterator-elems st-i))))
 
 (module+ test
