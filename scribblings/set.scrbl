@@ -11,7 +11,7 @@
 
 A set type, implemented using the @racket[gen:set] interface on top of scapegoat tree dicts.
 
-@section{Interface}
+@section{Set Interface}
 
 @defproc[(scapegoat-set? [obj any/c]) boolean?]{
 

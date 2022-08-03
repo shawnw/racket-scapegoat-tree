@@ -8,7 +8,7 @@
 @author[@author+email["Shawn Wagner" "shawnw.mobile@gmail.com"]]
 
 This manual documents data structure modules available in the
-@racketidfont{data/scapegoat-tree} collection.
+@racketidfont{scapegoat-tree} collection.
 
 @hyperlink["https://en.wikipedia.org/wiki/Scapegoat_tree"]{Scapegoat
 trees} are a type of self-balancing binary trees that, unlike more

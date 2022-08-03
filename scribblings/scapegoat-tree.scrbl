@@ -19,7 +19,7 @@ A scapegoat tree implements the @racket[gen:dict] and
 versions of functions update the pointer to the root of the tree as a
 convienence.
 
-@section{Interface}
+@section{Dictionary Interface}
 
 In addition to the @racket[dict?] and @racket[ordered-dict?] APIs,
 scapegoat trees support the following functions.
