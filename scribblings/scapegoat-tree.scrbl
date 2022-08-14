@@ -4,7 +4,7 @@
           (for-syntax racket/base racket/path)
           (for-label scribble/base))
 
-@title{Data: Scapegoat Trees}
+@title{Scapegoat Trees}
 @author[@author+email["Shawn Wagner" "shawnw.mobile@gmail.com"]]
 
 This manual documents data structure modules available in the
