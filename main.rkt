@@ -88,8 +88,7 @@
    (define (dict-iterate-greatest/<=? st key) (scapegoat-tree-great-iterator st key '(< =)))])
 
 (define (make-scapegoat-tree [order datum-order] #:key-contract [key-contract (order-domain-contract order)] #:value-contract [value-contract any/c])
-  (scapegoat-tree 0 0 order (if (or (eq? (order-domain-contract order) key-contract)
-                                    (eq? key-contract any/c))
+  (scapegoat-tree 0 0 order (if (contract-equivalent? (order-domain-contract order) key-contract)
                                 (order-domain-contract order)
                                 (and/c (order-domain-contract order) key-contract))
                   value-contract #f))
