@@ -14,14 +14,14 @@
 This module provides a dictionary type implemented using
 @hyperlink["https://en.wikipedia.org/wiki/Scapegoat_tree"]{scapegoat trees}.
 
-A scapegoat tree implements the @racket[gen:dict] and
-@racket[gen:ordered-dict] interfaces. Trees are immutable; side-effect
-versions of functions update the pointer to the root of the tree as a
+A scapegoat tree implements the @code{gen:dict} and
+@code{gen:ordered-dict} interfaces. Trees are immutable; side-effect
+versions of functions update a pointer to the root of the tree as a
 convienence.
 
 @section{Dictionary Interface}
 
-In addition to the @racket[dict?] and @racket[ordered-dict?] APIs,
+In addition to the @code{dict?} and @code{ordered-dict?} APIs,
 scapegoat trees support the following functions.
 
 @subsection{Parameters}
@@ -36,7 +36,7 @@ allowed to become.
 
 @defparam[scapegoat-tree-rebalance-on-copy rebalance? boolean? #:value #t]{
 
-If true, @racket[dict-copy] and @racket[scapegoat-tree-copy] return a
+If true, @code{dict-copy} and @code{scapegoat-tree-copy} return a
 fully rebalanced tree instead of a straight copy of the original.
 
 }
@@ -45,7 +45,7 @@ fully rebalanced tree instead of a straight copy of the original.
 
 @defproc[(scapegoat-tree? [obj any/c]) boolean?]{
 
-Tests if an object is a scapegoat tree or not
+Tests if an object is a scapegoat tree or not.
 
 }
 
@@ -79,6 +79,24 @@ Returns a new copy of the given tree.
          scapegoat-tree?]{
 
 Returns a new empty tree with the same order and contracts as the original.
+
+}
+
+@defform[(for/scapegoat-tree)] {
+
+A @racket{for} comprehension that returns a scapegoat tree with default order
+and contracts. The body should return two values, used as the key and value to
+be inserted into the returned scapegoat tree. Later keys overrwrite earlier
+duplicates.
+
+}
+
+@defform[(for*/scapegoat-tree)]{
+
+A @racket{for*} comprehension that returns a scapegoat tree with default order
+and contracts. The body should return two values, used as the key and value to
+be inserted into the returned scapegoat tree. Later keys overwrite earlier
+duplicates.
 
 }
 
@@ -118,8 +136,8 @@ Returns the number of elements stored in the tree.
          any]{
 
 Returns the value associated with the given tree. If not found and
-@racket[default] is a procedure, returns the value it returns,
-otherwise returns @racket[default].
+@code{default} is a procedure, returns the value it returns,
+otherwise returns @code{default}.
 
 }
 
@@ -131,7 +149,7 @@ otherwise returns @racket[default].
 Returns an iterator to the first element of the tree. Elements are
 returned in order through the iterator interface.
 
-Returns @racket[#f] if the tree is empty.
+Returns @code{#f} if the tree is empty.
 
 }
 
@@ -139,7 +157,7 @@ Returns @racket[#f] if the tree is empty.
          (or/c scapegoat-tree-iterator? #f)]{
 
 Returns the iterator to the next element after the given position, or
-@racket[#f] if at the end of the tree.
+@code{#f} if at the end of the tree.
 
 }
 
@@ -157,9 +175,9 @@ Returns the value of the indicated element of the tree.
 
 @defproc[(scapegoat-tree-iterator->list [s scapegoat-tree?] [i scapegoat-tree-iterator?]) list?]{
 
-Returns a list of the elements of the tree starting with the given
-iterator. The @racket[car] of each element of the list is the key and
-the @racket[cdr] is the value.
+Returns an alist of the elements of the tree starting with the given
+iterator. The @code{car} of each element of the list is the key and the
+@code{cdr} is the value.
 
 }
 

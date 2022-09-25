@@ -4,6 +4,6 @@
 (define build-deps '("data-doc" "scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/scapegoat-tree.scrbl" (multi-page) ("Data Structures"))))
 (define pkg-desc "Dicts and Sets using Scapegoat Trees")
-(define version "1.0")
+(define version "1.01")
 (define pkg-authors '(shawnw))
 (define license '(Apache-2.0 OR MIT))

@@ -25,7 +25,8 @@
 
 ;; Code here
 
-(require data/order racket/contract racket/dict racket/generator racket/stream)
+(require data/order racket/contract racket/dict racket/generator racket/stream
+         syntax/parse/define (for-syntax racket/base syntax/for-body))
 
 (provide (contract-out [scapegoat-tree? predicate/c]
                        [scapegoat-tree-iterator? predicate/c]
@@ -51,8 +52,8 @@
                        (scapegoat-tree-iterator->stream (-> scapegoat-tree? scapegoat-tree-iterator? stream?))
                        [scapegoat-tree-iterator->list (-> scapegoat-tree? scapegoat-tree-iterator? list?)]
                        [scapegoat-tree-iterator->key-list (-> scapegoat-tree? scapegoat-tree-iterator? list?)]
-                       [scapegoat-tree-iterator->value-list (-> scapegoat-tree? scapegoat-tree-iterator? list?)]
-                       ))
+                       [scapegoat-tree-iterator->value-list (-> scapegoat-tree? scapegoat-tree-iterator? list?)])
+         for/scapegoat-tree for*/scapegoat-tree)
 
 (define scapegoat-tree-height-factor
   (make-parameter 2/3
@@ -376,6 +377,29 @@
   (check-iterator 'scapegoat-tree-iterator->value-list st st-i)
   (map node-val (stream->list (scapegoat-tree-iterator-elems st-i))))
 
+;;; TODO: Add support for custom order, key and value contracts.
+
+(define-syntax-parse-rule (for/scapegoat-tree clauses body ... tail-expr)
+  #:with original this-syntax
+  #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
+  (for/fold/derived original
+    ([tree (make-scapegoat-tree)])
+    clauses
+    pre-body ...
+    (call-with-values (lambda () post-body ...)
+                      (lambda (k v) (scapegoat-tree-set tree k v)))))
+
+(define-syntax-parse-rule (for*/scapegoat-tree clauses body ... tail-expr)
+  #:with original this-syntax
+  #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
+  (for*/fold/derived original
+    ([tree (make-scapegoat-tree)])
+    clauses
+    pre-body ...
+    (call-with-values (lambda () post-body ...)
+                      (lambda (k v) (scapegoat-tree-set tree k v)))))
+
+
 (module+ test
   ;; Any code in this `test` submodule runs when this file is run using DrRacket
   ;; or with `raco test`. The code here does not run when this file is
@@ -455,4 +479,7 @@
   (define tree-gi2 (dict-iterate-greatest/<=? big-tree 5))
   (check-equal? (dict-iterate-key big-tree tree-gi2) 5)
   (check-equal? (scapegoat-tree-iterator->key-list big-tree tree-gi2) '(5 6 7 8 9))
+
+  (check-equal? (dict->list (for/scapegoat-tree ([k (in-list '(a b c d e))] [v (in-naturals)]) (values k v)))
+                '((a . 0) (b . 1) (c . 2) (d . 3) (e . 4)))
 )
