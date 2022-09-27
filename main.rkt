@@ -377,28 +377,41 @@
   (check-iterator 'scapegoat-tree-iterator->value-list st st-i)
   (map node-val (stream->list (scapegoat-tree-iterator-elems st-i))))
 
-;;; TODO: Add support for custom order, key and value contracts.
+(define-syntax (for/scapegoat-tree stx)
+  (syntax-parse stx
+    [(for/scapegoat-tree (~alt (~optional (~seq #:order order:expr))
+                               (~optional (~seq #:key-contract k-contract:expr))
+                               (~optional (~seq #:value-contract v-contract:expr))) ...
+                         clauses body:expr ... tail-expr:expr)
+     #:with original this-syntax
+     #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
+     #:with order-obj (or (attribute order) #'datum-order)
+     #:with key-contract (or (attribute k-contract) #'(order-domain-contract order-obj))
+     #:with value-contract (or (attribute v-contract) #'any/c)
+     #'(for/fold/derived original
+         ([tree (make-scapegoat-tree order-obj #:key-contract key-contract #:value-contract value-contract)])
+         clauses
+         pre-body ...
+         (call-with-values (lambda () post-body ...)
+                           (lambda (k v) (scapegoat-tree-set tree k v))))]))
 
-(define-syntax-parse-rule (for/scapegoat-tree clauses body ... tail-expr)
-  #:with original this-syntax
-  #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
-  (for/fold/derived original
-    ([tree (make-scapegoat-tree)])
-    clauses
-    pre-body ...
-    (call-with-values (lambda () post-body ...)
-                      (lambda (k v) (scapegoat-tree-set tree k v)))))
-
-(define-syntax-parse-rule (for*/scapegoat-tree clauses body ... tail-expr)
-  #:with original this-syntax
-  #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
-  (for*/fold/derived original
-    ([tree (make-scapegoat-tree)])
-    clauses
-    pre-body ...
-    (call-with-values (lambda () post-body ...)
-                      (lambda (k v) (scapegoat-tree-set tree k v)))))
-
+(define-syntax (for*/scapegoat-tree stx)
+  (syntax-parse stx
+    [(for/scapegoat-tree (~alt (~optional (~seq #:order order:expr))
+                               (~optional (~seq #:key-contract k-contract:expr))
+                               (~optional (~seq #:value-contract v-contract:expr))) ...
+                         clauses body:expr ... tail-expr:expr)
+     #:with original this-syntax
+     #:with ((pre-body ...) (post-body ...)) (split-for-body this-syntax #'(body ... tail-expr))
+     #:with order-obj (or (attribute order) #'datum-order)
+     #:with key-contract (or (attribute k-contract) #'(order-domain-contract order-obj))
+     #:with value-contract (or (attribute v-contract) #'any/c)
+     #'(for*/fold/derived original
+         ([tree (make-scapegoat-tree order-obj #:key-contract key-contract #:value-contract value-contract)])
+         clauses
+         pre-body ...
+         (call-with-values (lambda () post-body ...)
+                           (lambda (k v) (scapegoat-tree-set tree k v))))]))
 
 (module+ test
   ;; Any code in this `test` submodule runs when this file is run using DrRacket
@@ -481,5 +494,7 @@
   (check-equal? (scapegoat-tree-iterator->key-list big-tree tree-gi2) '(5 6 7 8 9))
 
   (check-equal? (dict->list (for/scapegoat-tree ([k (in-list '(a b c d e))] [v (in-naturals)]) (values k v)))
+                '((a . 0) (b . 1) (c . 2) (d . 3) (e . 4)))
+  (check-equal? (dict->list (for/scapegoat-tree #:key-contract symbol? ([k (in-list '(a b c d e))] [v (in-naturals)]) (values k v)))
                 '((a . 0) (b . 1) (c . 2) (d . 3) (e . 4)))
 )

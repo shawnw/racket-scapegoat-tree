@@ -58,7 +58,7 @@ Tests if an object is a scapegoat tree iterator or not.
 @subsection{Constructors}
 
 @defproc[(make-scapegoat-tree [order order? datum-order]
-                              [#:key-contract key-contract contract? any/c]
+                              [#:key-contract key-contract contract? (order-datum-contract order)]
                               [#:value-contract value-contract contract? any/c])
          scapegoat-tree?]{
 
@@ -82,21 +82,29 @@ Returns a new empty tree with the same order and contracts as the original.
 
 }
 
-@defform[(for/scapegoat-tree)] {
+@defform[(for/scapegoat-tree [#:order order order? order-datum]
+                             [#:key-contract key-contract contract? (order-datum-contract order)]
+                             [#:value-contract value-contract contract? any/c]
+          (sequence-binding ...)
+          body ...)] {
 
-A @racket{for} comprehension that returns a scapegoat tree with default order
-and contracts. The body should return two values, used as the key and value to
-be inserted into the returned scapegoat tree. Later keys overrwrite earlier
-duplicates.
+A @racket{for} comprehension that returns a scapegoat tree with the optionally
+provided order and contracts. The body should return two values, used as the
+key and value to be inserted into the returned scapegoat tree. Later keys
+overrwrite earlier duplicates.
 
 }
 
-@defform[(for*/scapegoat-tree)]{
+@defform[(for*/scapegoat-tree [#:order order order? order-datum]
+                              [#:key-contract key-contract contract? (order-datum-contract order)]
+                              [#:value-contract value-contract contract? any/c]
+          (sequence-binding ...)
+          body ...)] {
 
-A @racket{for*} comprehension that returns a scapegoat tree with default order
-and contracts. The body should return two values, used as the key and value to
-be inserted into the returned scapegoat tree. Later keys overwrite earlier
-duplicates.
+A @racket{for*} comprehension that returns a scapegoat tree with the optionally
+provided order and contracts. The body should return two values, used as the
+key and value to be inserted into the returned scapegoat tree. Later keys
+overrwrite earlier duplicates.
 
 }
 
